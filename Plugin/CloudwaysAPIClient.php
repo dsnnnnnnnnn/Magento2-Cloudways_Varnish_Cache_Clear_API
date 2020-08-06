@@ -1,23 +1,64 @@
 <?php
 declare(strict_types=1);
 
-namespace Red\Iguana\Observer;
+namespace Red\Iguana\Plugin;
 
 /**
  * Class CloudwaysAPIClient
  */
-class CloudwaysAPIClient implements \Magento\Framework\Event\ObserverInterface
+class CloudwaysAPIClient
 {
     const API_URL = "https://api.cloudways.com/api/v1";
 
+    /**
+     * @var bool $isEnable
+     */
+    private $isEnable;
+
+    /**
+     * @var mixed|string $serverName
+     */
+    private $serverName;
+
+    /**
+     * @var mixed|string $authKey
+     */
     private $authKey;
+
+    /**
+     * @var mixed|string $authEmail
+     */
     private $authEmail;
+
+    /**
+     * @var $accessToken
+     */
     private $accessToken;
 
-    public function __construct()
-    {
-        $this->authKey = 'your_key';
-        $this->authEmail = 'your_email';
+    /**
+     * @var \Red\Iguana\Helper\Config $configHelper
+     */
+    protected $configHelper;
+
+    /**
+     * @var \Magento\PageCache\Model\Config $config
+     */
+    protected $config;
+
+    /**
+     * CloudwaysAPIClient constructor.
+     * @param \Magento\PageCache\Model\Config $config
+     * @param \Red\Iguana\Helper\Config $configHelper
+     */
+    public function __construct(
+        \Magento\PageCache\Model\Config $config,
+        \Red\Iguana\Helper\Config $configHelper
+    ) {
+        $this->config = $config;
+        $this->serverName = $configHelper->getConfigParam(\Red\Iguana\Helper\Config::CLOUDWAYS_SERVER_NAME);
+        $this->authKey = $configHelper->getConfigParam(\Red\Iguana\Helper\Config::CLOUDWAYS_API_KEY);
+        $this->authEmail = $configHelper->getConfigParam(\Red\Iguana\Helper\Config::CLOUDWAYS_EMAIL);
+        $this->isEnable = $configHelper->isEnabled();
         $this->prepareAccessToken();
     }
 
@@ -34,7 +75,7 @@ class CloudwaysAPIClient implements \Magento\Framework\Event\ObserverInterface
     public function purgeCache()
     {
         foreach ($this->getServers() as $server) {
-            if ($server->label === 'your_server_name' && $server->status === 'running') {
+            if ($server->label === $this->serverName && $server->status === 'running') {
                 $data = [
                     'server_id' => $server->id,
                     'action' => 'purge'
@@ -49,6 +90,9 @@ class CloudwaysAPIClient implements \Magento\Framework\Event\ObserverInterface
         }
     }
 
+    /**
+     * @return array
+     */
     private function getServers(): array
     {
         $response = $this->request('GET', '/server');
@@ -60,6 +104,12 @@ class CloudwaysAPIClient implements \Magento\Framework\Event\ObserverInterface
         return [];
     }
 
+    /**
+     * @param $method
+     * @param $url
+     * @param array $post
+     * @return mixed
+     */
     private function request($method, $url, $post = [])
     {
         $ch = curl_init();
@@ -85,6 +135,7 @@ class CloudwaysAPIClient implements \Magento\Framework\Event\ObserverInterface
             $output = curl_exec($ch);
             $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+            # ACCESS TOKEN HAS EXPIRED, so regenerate and retry
             if ($httpCode === 401) {
                 $this->prepareAccessToken();
             }
@@ -100,8 +151,14 @@ class CloudwaysAPIClient implements \Magento\Framework\Event\ObserverInterface
         return json_decode($output, false);
     }
 
-    public function execute(\Magento\Framework\Event\Observer $observer)
+    /**
+     * @param \Magento\Framework\App\Cache\TypeList $subject
+     * @param $typeCode
+     */
+    public function beforeCleanType(\Magento\Framework\App\Cache\TypeList $subject, $typeCode)
     {
-        $this->purgeCache();
+        if ($this->isEnable && $this->config->isEnabled() && $typeCode == 'full_page') {
+            $this->purgeCache();
+        }
     }
 }

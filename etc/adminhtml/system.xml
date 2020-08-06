@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="cloudways_api" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Cloudways API Config</label>
+            <tab>general</tab>
+            <resource>Magento_Config::config_admin</resource>
+            <group id="settings" translate="label" type="text" sortOrder="100" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Settings</label>
+                <field id="enabled" translate="label" type="select" sortOrder="200" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enable Cloudways Varnish Clearing</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="cloudways_server_name" translate="label" type="text" sortOrder="300" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Server name</label>
+                    <validate>required-entry</validate>
+                </field>
+                <field id="cloudways_api_key" translate="label" type="obscure" sortOrder="400" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Api Key</label>
+                    <validate>required-entry</validate>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="cloudways_email" translate="label" type="text" sortOrder="500" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>E-mail</label>
+                    <validate>required-entry</validate>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

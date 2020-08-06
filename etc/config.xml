@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <cloudways_api>
+            <settings>
+                <enabled>0</enabled>
+                <cloudways_server_name>server_name</cloudways_server_name>
+                <cloudways_api_key backend_model="Magento\Config\Model\Config\Backend\Encrypted" />
+                <cloudways_email>cloudways_email</cloudways_email>
+            </settings>
+        </cloudways_api>
+    </default>
+</config>
